@@ -37,6 +37,7 @@ frag = """
 #version 130
 
 uniform sampler2D map_Kd;
+uniform vec3 Ka;
 uniform vec3 Kd;
 uniform float d;
 
@@ -45,9 +46,13 @@ in vec3 normal_out;
 out vec4 color_out;
 
 void main(void) {
+   vec3 norm = normalize(normal_out);
+   vec3 lightDir = normalize(vec3(0, 0, 0) - gl_FragCoord.xyz);
+   float diff = max(dot(norm, lightDir), 0.0);
+
    color_out = texture(map_Kd, tex_out);
-   color_out.rgb *= Kd;
-   color_out.rgb += .0001 * normal_out;
+   color_out.rgb *= Kd * diff;
+   color_out.rgb = color_out.rgb * .9 + Ka * .1;
    color_out.a = d;
 }
 """
@@ -207,6 +212,7 @@ class Object_VBO:
         glUniformMatrix4fv(trans_unif, 1, GL_FALSE, trans.to_list());
 
         glUniform3f(glGetUniformLocation(glsl_program, "Kd"), *self.mtl.Kd)
+        glUniform3f(glGetUniformLocation(glsl_program, "Ka"), *self.mtl.Ka)
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, self.mtl.map_Kd)
