@@ -28,7 +28,7 @@ out vec3 normal_out;
 
 void main(void) {
    tex_out = tex;
-   normal_out = normal;
+   normal_out = (trans * vec4(normal, 1.)).xyz;
    gl_Position = trans * vertex;
 }
 """
@@ -48,7 +48,7 @@ out vec4 color_out;
 
 void main(void) {
    vec3 norm = normalize(normal_out);
-   vec3 lightDir = normalize(vec3(0, 0, 0) - gl_FragCoord.xyz);
+   vec3 lightDir = normalize(vec3(1, 0, 0) - gl_FragCoord.xyz);
    float diff = max(dot(norm, lightDir), 0.0);
 
    color_out = texture(map_Kd, tex_out);
