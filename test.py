@@ -244,6 +244,11 @@ def parse_obj(f):
     cur_object = None
     mtls = None
 
+    vertices = []
+    v_list = []
+    vt_list = []
+    index_map = {}
+
     for l in f:
         l = l.split()
         if not l or l[0].startswith('#'):
@@ -261,6 +266,15 @@ def parse_obj(f):
             pass
         # Face
         elif l[0] == 'f':
+            for i in l[1:4]:
+                v, vt = map(int, i.split('/'))
+                if (v, vt) in index_map:
+                    index = index_map[(v, vt)]
+                else:
+                    vertices.append((v_list[v - 1], vt_list[vt - 1]))
+                    index = len(vertices) - 1
+                    index_map[(v, vt)] = index
+
             values = [[int(j) - 1 for j in i.split('/')] for i in l[1:4]]
             cur_object.faces.extend(i[0] for i in values);
             cur_object.texture_faces.extend(i[1] for i in values);
@@ -270,12 +284,16 @@ def parse_obj(f):
             #cur_object.vertices.extend(float(i) for i in l[1:4])
             engine.vertices.extend(float(i) for i in l[1:4])
             body.vertices.extend(float(i) for i in l[1:4])
+
+            v_list.append(tuple(float(i) for i in l[1:4]))
         # Texture vertex
         elif l[0] == 'vt':
             # XXX
             #cur_object.texture_vertices.extend(float(i) for i in l[1:3])
             engine.texture_vertices.extend(float(i) for i in l[1:3])
             body.texture_vertices.extend(float(i) for i in l[1:3])
+
+            vt_list.append(tuple(float(i) for i in l[1:3]))
         # Object
         elif l[0] == 'o':
             if l[1] == 'engine':
@@ -292,6 +310,7 @@ def parse_obj(f):
 
     engine = Object_VBO(engine)
     body = Object_VBO(body)
+
     return Ship(body, engine)
 
 
