@@ -290,17 +290,6 @@ def parse_obj(f):
     engine = Object_C(engine)
     body = Object_C(body)
 
-    # with open('admonisher', 'wb') as f:
-    #     f.write(engine.vertices)
-    #     f.write(engine.texture_vertices)
-    #     f.write(engine.faces)
-    #     f.write(engine.texture_faces)
-
-    #    f.write(body.vertices)
-    #    f.write(body.texture_vertices)
-    #    f.write(body.faces)
-    #    f.write(body.texture_faces)
-
     engine = Object_VBO(engine)
     body = Object_VBO(body)
     return Ship(body, engine)
