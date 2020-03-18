@@ -260,9 +260,12 @@ def parse_obj(f):
         # Face
         elif l[0] == 'f':
             for i in l[1:4]:
-                v, vt, vn = map(int, i.split('/'))
+                v, vt, vn = (int(j or 0) for j in i.split('/'))
                 cur_object.vertices.extend(v_list[v - 1])
-                cur_object.vertices.extend(vt_list[vt - 1])
+                if (vt == 0):
+                    cur_object.vertices.extend((0, 0))
+                else:
+                    cur_object.vertices.extend(vt_list[vt - 1])
                 cur_object.vertices.extend(vn_list[vn - 1])
         # Vertex
         elif l[0] == 'v':
@@ -299,8 +302,8 @@ glutInitWindowSize(1920, 1080)
 glutInitWindowPosition(0, 0)
 window = glutCreateWindow("")
 
-with open('admonisher.obj') as f:
-    admonisher = parse_obj(f)
+with open(sys.argv[1]) as f:
+    ship = parse_obj(f)
 
 glsl_program = gl_program_vert_frag(vert, frag)
 glUseProgram(glsl_program)
@@ -308,5 +311,5 @@ glUseProgram(glsl_program)
 while True:
     glClearColor(1., 1., 1., 1.)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    admonisher.draw()
+    ship.draw()
     glutSwapBuffers()
