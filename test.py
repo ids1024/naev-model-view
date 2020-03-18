@@ -20,11 +20,14 @@ vert = """
 uniform mat4 trans;
 
 in vec4 vertex;
+in vec3 normal;
 in vec2 tex;
 out vec2 tex_out;
+out vec3 normal_out;
 
 void main(void) {
    tex_out = tex;
+   normal_out = normal;
    gl_Position = trans * vertex;
 }
 """
@@ -38,11 +41,13 @@ uniform vec3 Kd;
 uniform float d;
 
 in vec2 tex_out;
+in vec3 normal_out;
 out vec4 color_out;
 
 void main(void) {
    color_out = texture(map_Kd, tex_out);
    color_out.rgb *= Kd;
+   color_out.rgb += .0001 * normal_out;
    color_out.a = d;
 }
 """
@@ -150,14 +155,12 @@ class Object:
     mtl = None
     def __init__(self):
         self.vertices = []
-        self.texture_vertices = []
 
 
 class Object_C:
     def __init__(self, o):
         assert isinstance(o, Object)
         self.vertices = (GLfloat * len(o.vertices))(*o.vertices)
-        self.texture_vertices = (GLfloat * len(o.texture_vertices))(*o.texture_vertices)
         self.mtl = o.mtl
 
 
@@ -165,19 +168,22 @@ class Object_VBO:
     def __init__(self, o):
         assert isinstance(o, Object_C)
         self.vertices = VBO(o.vertices, GL_STATIC_DRAW, GL_ARRAY_BUFFER)
-        self.texture_vertices = VBO(o.texture_vertices, GL_STATIC_DRAW, GL_ARRAY_BUFFER)
         self.mtl = o.mtl
 
     def draw(self):
         self.vertices.bind()
+
         vertex_attrib = glGetAttribLocation(glsl_program, "vertex")
         glEnableVertexAttribArray(vertex_attrib)
-        glVertexAttribPointer(vertex_attrib, 3, GL_FLOAT, GL_FALSE, 0, c_void_p(0));
+        glVertexAttribPointer(vertex_attrib, 3, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(0));
 
-        self.texture_vertices.bind()
         tex_attrib = glGetAttribLocation(glsl_program, "tex")
         glEnableVertexAttribArray(tex_attrib)
-        glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, c_void_p(0));
+        glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(3 * 4));
+
+        normal_attrib = glGetAttribLocation(glsl_program, "normal")
+        glEnableVertexAttribArray(normal_attrib)
+        glVertexAttribPointer(normal_attrib, 2, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(5 * 4));
 
         trans_unif = glGetUniformLocation(glsl_program, "trans")
         rot = time.time() / 2 % 360
@@ -238,6 +244,7 @@ def parse_obj(f):
 
     v_list = []
     vt_list = []
+    vn_list = []
 
     for l in f:
         l = l.split()
@@ -257,15 +264,19 @@ def parse_obj(f):
         # Face
         elif l[0] == 'f':
             for i in l[1:4]:
-                v, vt = map(int, i.split('/'))
+                v, vt, vn = map(int, i.split('/'))
                 cur_object.vertices.extend(v_list[v - 1])
-                cur_object.texture_vertices.extend(vt_list[vt - 1])
+                cur_object.vertices.extend(vt_list[vt - 1])
+                cur_object.vertices.extend(vn_list[vn - 1])
         # Vertex
         elif l[0] == 'v':
             v_list.append(tuple(float(i) for i in l[1:4]))
         # Texture vertex
         elif l[0] == 'vt':
             vt_list.append(tuple(float(i) for i in l[1:3]))
+        # Vertex normal
+        elif l[0] == 'vn':
+            vn_list.append(tuple(float(i) for i in l[1:4]))
         # Object
         elif l[0] == 'o':
             if l[1] == 'engine':
