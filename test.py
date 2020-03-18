@@ -3,6 +3,7 @@
 # TODO: file format: interleaved, extendable
 # TODO: uniform buffer object
 # TODO: https://stackoverflow.com/questions/50806126/why-are-textures-displayed-incorrectly-when-using-indexed-rendering-gldraweleme
+# TODO: handle material switches within one object (combine into atlas texture? texture array? multiple draws?)
 
 import sys
 import time
