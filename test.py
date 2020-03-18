@@ -192,10 +192,12 @@ class Object_VBO:
         glVertexAttribPointer(normal_attrib, 2, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(5 * 4));
 
         trans_unif = glGetUniformLocation(glsl_program, "trans")
+        rot = time.time() / 4 % 2*math.pi
         trans = glm.mat4x4()
         trans = glm.scale(trans, glm.vec3(1/6, 1/6, 1/6))
         trans = glm.rotate(trans, -math.pi / 2, glm.vec3(1, 0, 0))
-        trans = glm.rotate(trans, -math.pi / 2, glm.vec3(0, 0, 1))
+        trans = glm.rotate(trans, -math.pi / 4, glm.vec3(1, 0, 0))
+        trans = glm.rotate(trans, rot, glm.vec3(0, 0, 1))
 
         glUniformMatrix4fv(trans_unif, 1, GL_FALSE, trans.to_list());
 
