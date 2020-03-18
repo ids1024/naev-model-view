@@ -151,8 +151,6 @@ class Object:
     def __init__(self):
         self.vertices = []
         self.texture_vertices = []
-        self.faces = []
-        self.texture_faces = []
 
 
 class Object_C:
@@ -160,8 +158,6 @@ class Object_C:
         assert isinstance(o, Object)
         self.vertices = (GLfloat * len(o.vertices))(*o.vertices)
         self.texture_vertices = (GLfloat * len(o.texture_vertices))(*o.texture_vertices)
-        self.faces = (GLuint * len(o.faces))(*o.faces)
-        self.texture_faces = (GLuint * len(o.texture_faces))(*o.texture_faces)
         self.mtl = o.mtl
 
 
@@ -170,19 +166,15 @@ class Object_VBO:
         assert isinstance(o, Object_C)
         self.vertices = VBO(o.vertices, GL_STATIC_DRAW, GL_ARRAY_BUFFER)
         self.texture_vertices = VBO(o.texture_vertices, GL_STATIC_DRAW, GL_ARRAY_BUFFER)
-        self.faces = VBO(o.faces, GL_STATIC_DRAW, GL_ELEMENT_ARRAY_BUFFER)
-        self.texture_faces = VBO(o.texture_faces, GL_STATIC_DRAW, GL_ELEMENT_ARRAY_BUFFER)
         self.mtl = o.mtl
 
     def draw(self):
         self.vertices.bind()
-        self.faces.bind()
         vertex_attrib = glGetAttribLocation(glsl_program, "vertex")
         glEnableVertexAttribArray(vertex_attrib)
         glVertexAttribPointer(vertex_attrib, 3, GL_FLOAT, GL_FALSE, 0, c_void_p(0));
 
         self.texture_vertices.bind()
-        #self.texture_faces.bind()
         tex_attrib = glGetAttribLocation(glsl_program, "tex")
         glEnableVertexAttribArray(tex_attrib)
         glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, 0, c_void_p(0));
@@ -223,8 +215,8 @@ class Object_VBO:
         #glEnable(GL_CULL_FACE);
         #glCullFace(GL_BACK);
 
-        count = self.faces.data._length_
-        glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, c_void_p(0))
+        count = self.vertices.data._length_ // 3
+        glDrawArrays(GL_TRIANGLES, 0, count)
         gl_checkErr()
 
 
@@ -244,10 +236,8 @@ def parse_obj(f):
     cur_object = None
     mtls = None
 
-    vertices = []
     v_list = []
     vt_list = []
-    index_map = {}
 
     for l in f:
         l = l.split()
@@ -268,31 +258,13 @@ def parse_obj(f):
         elif l[0] == 'f':
             for i in l[1:4]:
                 v, vt = map(int, i.split('/'))
-                if (v, vt) in index_map:
-                    index = index_map[(v, vt)]
-                else:
-                    vertices.append((v_list[v - 1], vt_list[vt - 1]))
-                    index = len(vertices) - 1
-                    index_map[(v, vt)] = index
-
-            values = [[int(j) - 1 for j in i.split('/')] for i in l[1:4]]
-            cur_object.faces.extend(i[0] for i in values);
-            cur_object.texture_faces.extend(i[1] for i in values);
+                cur_object.vertices.extend(v_list[v - 1])
+                cur_object.texture_vertices.extend(vt_list[vt - 1])
         # Vertex
         elif l[0] == 'v':
-            # XXX
-            #cur_object.vertices.extend(float(i) for i in l[1:4])
-            engine.vertices.extend(float(i) for i in l[1:4])
-            body.vertices.extend(float(i) for i in l[1:4])
-
             v_list.append(tuple(float(i) for i in l[1:4]))
         # Texture vertex
         elif l[0] == 'vt':
-            # XXX
-            #cur_object.texture_vertices.extend(float(i) for i in l[1:3])
-            engine.texture_vertices.extend(float(i) for i in l[1:3])
-            body.texture_vertices.extend(float(i) for i in l[1:3])
-
             vt_list.append(tuple(float(i) for i in l[1:3]))
         # Object
         elif l[0] == 'o':
