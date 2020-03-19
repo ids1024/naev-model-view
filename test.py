@@ -8,6 +8,7 @@
 # TODO: specral, emit, l (used in peacemaker.obj?)
 # https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-mtl-file-format.html
 # illum 2 is Blinn–Phong reflection model
+# map files in a .mtl are square power of two
 
 import sys
 import time
@@ -312,8 +313,6 @@ glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH)
 glutInitWindowSize(800, 600)
 glutInitWindowPosition(0, 0)
 window = glutCreateWindow("")
-
-glBindVertexArray(glGenVertexArrays(1))
 
 glsl_program = gl_program_vert_frag(vert, frag)
 glUseProgram(glsl_program)
