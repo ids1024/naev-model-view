@@ -11,6 +11,7 @@
 # map files in a .mtl are square power of two
 
 import sys
+import os
 import time
 from OpenGL.GL import *
 from OpenGL.GLU import *
@@ -122,7 +123,9 @@ class Material:
        self.map_Kd = solidTexture(1, 1, 1)
 
 
-def parse_mtl(f):
+def parse_mtl(path):
+    f = open(path)
+
     materials = {}
     cur_material = None
 
@@ -154,7 +157,7 @@ def parse_mtl(f):
         elif l[0] == 'illum':
             cur_material.d = int(l[1])
         elif l[0] == 'map_Kd':
-            cur_material.map_Kd = loadTexture(l[1])
+            cur_material.map_Kd = loadTexture(os.path.dirname(path) + '/' + l[1])
         else:
             print(f"Ignoring {l[0]}")
 
@@ -242,7 +245,9 @@ class Ship:
         self.engine.draw()
 
 
-def parse_obj(f):
+def parse_obj(path):
+    f = open(path)
+
     engine = Object()
     body = Object()
     cur_object = None
@@ -259,8 +264,7 @@ def parse_obj(f):
 
         # Load materials from file
         if l[0] == 'mtllib':
-            with open(l[1]) as f:
-                mtls = parse_mtl(f)
+            mtls = parse_mtl(os.path.dirname(path) + '/' + l[1])
         # Use material
         elif l[0] == 'usemtl':
             cur_object.mtl = mtls[l[1]]
@@ -317,8 +321,7 @@ window = glutCreateWindow("")
 glsl_program = gl_program_vert_frag(vert, frag)
 glUseProgram(glsl_program)
 
-with open(sys.argv[1]) as f:
-    ship = parse_obj(f)
+ship = parse_obj(sys.argv[1])
 
 rot = 0
 
