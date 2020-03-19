@@ -176,10 +176,13 @@ class Object_C:
 class Object_VBO:
     def __init__(self, o):
         assert isinstance(o, Object_C)
+
         self.vertices = VBO(o.vertices, GL_STATIC_DRAW, GL_ARRAY_BUFFER)
+        self.vao = glGenVertexArrays(1)
         self.mtl = o.mtl
 
-    def draw(self):
+        glBindVertexArray(self.vao)
+
         self.vertices.bind()
 
         vertex_attrib = glGetAttribLocation(glsl_program, "vertex")
@@ -193,6 +196,10 @@ class Object_VBO:
         normal_attrib = glGetAttribLocation(glsl_program, "normal")
         glEnableVertexAttribArray(normal_attrib)
         glVertexAttribPointer(normal_attrib, 2, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(5 * 4));
+
+
+    def draw(self):
+        glBindVertexArray(self.vao)
 
         trans_unif = glGetUniformLocation(glsl_program, "trans")
         trans = glm.ortho(-1, 1, -1, 1)
@@ -306,13 +313,13 @@ glutInitWindowSize(800, 600)
 glutInitWindowPosition(0, 0)
 window = glutCreateWindow("")
 
-with open(sys.argv[1]) as f:
-    ship = parse_obj(f)
-
 glBindVertexArray(glGenVertexArrays(1))
 
 glsl_program = gl_program_vert_frag(vert, frag)
 glUseProgram(glsl_program)
+
+with open(sys.argv[1]) as f:
+    ship = parse_obj(f)
 
 rot = 0
 
