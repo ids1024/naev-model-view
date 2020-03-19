@@ -4,6 +4,10 @@
 # TODO: uniform buffer object
 # TODO: https://stackoverflow.com/questions/50806126/why-are-textures-displayed-incorrectly-when-using-indexed-rendering-gldraweleme
 # TODO: handle material switches within one object (combine into atlas texture? texture array? multiple draws?)
+# TODO: bump map
+# TODO: specral, emit, l (used in peacemaker.obj?)
+# https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-mtl-file-format.html
+# illum 2 is Blinn–Phong reflection model
 
 import sys
 import time
@@ -39,8 +43,7 @@ frag = """
 #version 130
 
 uniform sampler2D map_Kd;
-uniform vec3 Ka;
-uniform vec3 Kd;
+uniform vec3 Ka, Kd;
 uniform float d;
 
 in vec2 tex_out;
@@ -49,12 +52,11 @@ out vec4 color_out;
 
 void main(void) {
    vec3 norm = normalize(normal_out);
-   vec3 lightDir = normalize(vec3(1, 0, 0) - gl_FragCoord.xyz);
+   vec3 lightDir = vec3(0, 0, -1);
    float diff = max(dot(norm, lightDir), 0.0);
 
    color_out = texture(map_Kd, tex_out);
-   color_out.rgb *= Kd * diff;
-   color_out.rgb = color_out.rgb * .9 + Ka * .1;
+   color_out.rgb *= Kd * diff * .7 + Ka * .4;
    color_out.a = d;
 }
 """
@@ -298,8 +300,8 @@ def parse_obj(f):
 
 
 glutInit("")
-glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_3_2_CORE_PROFILE)
-glutInitWindowSize(1920, 1080)
+glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_3_2_CORE_PROFILE)
+glutInitWindowSize(800, 600)
 glutInitWindowPosition(0, 0)
 window = glutCreateWindow("")
 
@@ -309,8 +311,16 @@ with open(sys.argv[1]) as f:
 glsl_program = gl_program_vert_frag(vert, frag)
 glUseProgram(glsl_program)
 
-while True:
+def display():
     glClearColor(1., 1., 1., 1.)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     ship.draw()
     glutSwapBuffers()
+    glutPostRedisplay()
+
+def reshape(w, h):
+    glViewport(0, 0, w, h)
+
+glutDisplayFunc(display)
+glutReshapeFunc(reshape)
+glutMainLoop()
