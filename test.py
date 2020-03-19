@@ -21,7 +21,7 @@ import glm
 import math
 
 vert = """
-#version 130
+#version 150
 
 uniform mat4 trans;
 
@@ -40,9 +40,10 @@ void main(void) {
 
 
 frag = """
-#version 130
+#version 150
 
 uniform sampler2D map_Kd;
+
 uniform vec3 Ka, Kd;
 uniform float d;
 
@@ -92,7 +93,6 @@ def solidTexture(r, g, b):
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
 
     return texid
 
@@ -299,13 +299,17 @@ def parse_obj(f):
 
 
 glutInit("")
-glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_3_2_CORE_PROFILE)
+glutInitContextVersion(3, 2)
+glutInitContextProfile(GLUT_CORE_PROFILE)
+glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH)
 glutInitWindowSize(800, 600)
 glutInitWindowPosition(0, 0)
 window = glutCreateWindow("")
 
 with open(sys.argv[1]) as f:
     ship = parse_obj(f)
+
+glBindVertexArray(glGenVertexArrays(1))
 
 glsl_program = gl_program_vert_frag(vert, frag)
 glUseProgram(glsl_program)
