@@ -195,7 +195,6 @@ class Object_VBO:
         glVertexAttribPointer(normal_attrib, 2, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(5 * 4));
 
         trans_unif = glGetUniformLocation(glsl_program, "trans")
-        rot = time.time() / 4 % 2*math.pi
         trans = glm.ortho(-1, 1, -1, 1)
         trans = glm.scale(trans, glm.vec3(1/6, 1/6, 1/6))
         trans = glm.rotate(trans, -math.pi / 2, glm.vec3(1, 0, 0))
@@ -311,6 +310,8 @@ with open(sys.argv[1]) as f:
 glsl_program = gl_program_vert_frag(vert, frag)
 glUseProgram(glsl_program)
 
+rot = 0
+
 def display():
     glClearColor(1., 1., 1., 1.)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -321,6 +322,14 @@ def display():
 def reshape(w, h):
     glViewport(0, 0, w, h)
 
+def keyboard(key, x, y):
+   global rot
+   if key == b'a':
+      rot += math.pi / 16
+   elif key == b'd':
+      rot -= math.pi / 16
+
 glutDisplayFunc(display)
 glutReshapeFunc(reshape)
+glutKeyboardFunc(keyboard)
 glutMainLoop()
