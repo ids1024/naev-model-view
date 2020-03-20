@@ -132,6 +132,25 @@ class Material:
        self.map_Bump = solidTexture(0, 0, 0)
 
 
+def mtl_getopt(args, arg_spec):
+    results = {}
+
+    i = 0
+    while i < len(args):
+        matched = False
+        if args[i].startswith('-'):
+            for name, count in arg_spec.items(): 
+                if args[i][1:] == name:
+                    results[name] = tuple(args[i+1:i+count+1])
+                    i += count
+                    matched = True
+        if not matched:
+            break
+        i += 1
+
+    return (results, tuple(args[i:]))
+
+
 def parse_mtl(path):
     f = open(path)
 
@@ -166,14 +185,15 @@ def parse_mtl(path):
         elif l[0] == 'illum':
             cur_material.d = int(l[1])
         elif l[0] == 'map_Kd':
-            map_Kd = ' '.join(l[1:])
+            # XXX handle s
+            opts, rest = mtl_getopt(l[1:], {'s': 3})
+            map_Kd = ' '.join(rest)
             cur_material.map_Kd = loadTexture(os.path.dirname(path) + '/' + map_Kd)
         elif l[0] == 'map_Bump':
-            if l[1] == '-bm':
-                cur_material.bm = float(l[2])
-                map_Bump = l[3]
-            else:
-                map_Bump = l[1]
+            # XXX handle s
+            opts, rest = mtl_getopt(l[1:], {'s': 3, 'bm': 1})
+            cur_material.bm = float(opts['bm'][0])
+            map_Bump = ' '.join(rest)
             cur_material.map_Bump = loadTexture(os.path.dirname(path) + '/' + map_Bump)
         else:
             print(f"Ignoring {l[0]}")
