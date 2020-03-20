@@ -313,7 +313,7 @@ def parse_obj(path):
 glutInit("")
 glutInitContextVersion(3, 2)
 glutInitContextProfile(GLUT_CORE_PROFILE)
-glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH)
+glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE)
 glutInitWindowSize(800, 600)
 glutInitWindowPosition(0, 0)
 window = glutCreateWindow("")
