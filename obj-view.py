@@ -183,7 +183,7 @@ def parse_mtl(path):
             cur_material.d = float(l[1])
         # Illumination mode
         elif l[0] == 'illum':
-            cur_material.d = int(l[1])
+            pass
         elif l[0] == 'map_Kd':
             # XXX handle s
             opts, rest = mtl_getopt(l[1:], {'s': 3})
