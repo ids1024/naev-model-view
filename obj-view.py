@@ -11,6 +11,7 @@
 # https://people.cs.clemson.edu/~dhouse/courses/405/docs/brief-mtl-file-format.html
 # illum 2 is Blinn–Phong reflection model
 # map files in a .mtl are square power of two
+# TODO: make sure bump mapping is correct
 
 import sys
 import os
@@ -46,22 +47,26 @@ void main(void) {
 frag = """
 #version 150
 
-uniform sampler2D map_Kd;
+uniform sampler2D map_Kd, map_Bump;
 
 uniform vec3 Ka, Kd;
-uniform float d;
+uniform float d, bm;
 
 in vec2 tex_out;
 in vec3 normal_out;
 out vec4 color_out;
 
+const vec3 lightDir = vec3(0, 0, -1);
+
 void main(void) {
-   vec3 norm = normalize(normal_out);
-   vec3 lightDir = vec3(0, 0, -1);
-   float diff = max(dot(norm, lightDir), 0.0);
+   vec3 norm = normalize(normal_out + bm * texture(map_Bump, tex_out).xyz);
+
+   vec3 ambient = Ka;
+
+   vec3 diffuse = Kd * max(dot(norm, lightDir), 0.0);
 
    color_out = texture(map_Kd, tex_out);
-   color_out.rgb *= Kd * diff * .7 + Ka * .4;
+   color_out.rgb *= .4 * ambient + .7 * diffuse;
    color_out.a = d;
 }
 """
@@ -119,10 +124,12 @@ class Material:
     Ks = None
     Ns = None
     Ni = None
+    bm = 1
     d = 1.0
 
     def __init__(self):
        self.map_Kd = solidTexture(1, 1, 1)
+       self.map_Bump = solidTexture(0, 0, 0)
 
 
 def parse_mtl(path):
@@ -159,7 +166,15 @@ def parse_mtl(path):
         elif l[0] == 'illum':
             cur_material.d = int(l[1])
         elif l[0] == 'map_Kd':
-            cur_material.map_Kd = loadTexture(os.path.dirname(path) + '/' + l[1])
+            map_Kd = ' '.join(l[1:])
+            cur_material.map_Kd = loadTexture(os.path.dirname(path) + '/' + map_Kd)
+        elif l[0] == 'map_Bump':
+            if l[1] == '-bm':
+                cur_material.bm = float(l[2])
+                map_Bump = l[3]
+            else:
+                map_Bump = l[1]
+            cur_material.map_Bump = loadTexture(os.path.dirname(path) + '/' + map_Bump)
         else:
             print(f"Ignoring {l[0]}")
 
@@ -193,15 +208,15 @@ class Object_VBO:
 
         vertex_attrib = glGetAttribLocation(glsl_program, "vertex")
         glEnableVertexAttribArray(vertex_attrib)
-        glVertexAttribPointer(vertex_attrib, 3, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(0));
+        glVertexAttribPointer(vertex_attrib, 3, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(0))
 
         tex_attrib = glGetAttribLocation(glsl_program, "tex")
         glEnableVertexAttribArray(tex_attrib)
-        glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(3 * 4));
+        glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(3 * 4))
 
         normal_attrib = glGetAttribLocation(glsl_program, "normal")
         glEnableVertexAttribArray(normal_attrib)
-        glVertexAttribPointer(normal_attrib, 2, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(5 * 4));
+        glVertexAttribPointer(normal_attrib, 2, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(5 * 4))
 
 
     def draw(self):
@@ -213,21 +228,26 @@ class Object_VBO:
         trans = glm.rotate(trans, -math.pi / 2, glm.vec3(1, 0, 0))
         trans = glm.rotate(trans, math.pi / 4, glm.vec3(1, 0, 0))
         trans = glm.rotate(trans, rot, glm.vec3(0, 0, 1))
-        glUniformMatrix4fv(trans_unif, 1, GL_FALSE, trans.to_list());
+        glUniformMatrix4fv(trans_unif, 1, GL_FALSE, trans.to_list())
 
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LESS)
 
-        glUniform1i(glGetUniformLocation(glsl_program, "map_Kd"), 0);
+        glUniform1i(glGetUniformLocation(glsl_program, "map_Kd"), 0)
+        glUniform1i(glGetUniformLocation(glsl_program, "map_Bump"), 1)
 
         for (mtl, start, count) in self.mtl_list:
             glUniform3f(glGetUniformLocation(glsl_program, "Kd"), *mtl.Kd)
             glUniform3f(glGetUniformLocation(glsl_program, "Ka"), *mtl.Ka)
             glUniform1f(glGetUniformLocation(glsl_program, "d"), mtl.d)
+            glUniform1f(glGetUniformLocation(glsl_program, "bm"), mtl.bm)
 
-            glActiveTexture(GL_TEXTURE0);
+            glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, mtl.map_Kd)
- 
+
+            glActiveTexture(GL_TEXTURE1)
+            glBindTexture(GL_TEXTURE_2D, mtl.map_Bump)
+
             glDrawArrays(GL_TRIANGLES, start, count)
 
         gl_checkErr()
