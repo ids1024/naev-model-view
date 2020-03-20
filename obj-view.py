@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # TODO: antialias edges of model
 # TODO: diffuse
 # TODO: file format: interleaved, extendable
