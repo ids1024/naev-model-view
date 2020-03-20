@@ -165,16 +165,16 @@ def parse_mtl(path):
 
 
 class Object:
-    mtl = None
     def __init__(self):
         self.vertices = []
+        self.mtl_list = []
 
 
 class Object_C:
     def __init__(self, o):
         assert isinstance(o, Object)
         self.vertices = (GLfloat * len(o.vertices))(*o.vertices)
-        self.mtl = o.mtl
+        self.mtl_list = o.mtl_list
 
 
 class Object_VBO:
@@ -183,7 +183,7 @@ class Object_VBO:
 
         self.vertices = VBO(o.vertices, GL_STATIC_DRAW, GL_ARRAY_BUFFER)
         self.vao = glGenVertexArrays(1)
-        self.mtl = o.mtl
+        self.mtl_list = o.mtl_list
 
         glBindVertexArray(self.vao)
 
@@ -211,27 +211,23 @@ class Object_VBO:
         trans = glm.rotate(trans, -math.pi / 2, glm.vec3(1, 0, 0))
         trans = glm.rotate(trans, math.pi / 4, glm.vec3(1, 0, 0))
         trans = glm.rotate(trans, rot, glm.vec3(0, 0, 1))
-
         glUniformMatrix4fv(trans_unif, 1, GL_FALSE, trans.to_list());
 
-        glUniform3f(glGetUniformLocation(glsl_program, "Kd"), *self.mtl.Kd)
-        glUniform3f(glGetUniformLocation(glsl_program, "Ka"), *self.mtl.Ka)
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, self.mtl.map_Kd)
-        glUniform1i(glGetUniformLocation(glsl_program, "map_Kd"), 0);
-
-        glUniform1f(glGetUniformLocation(glsl_program, "d"), self.mtl.d)
-
-        # XXX
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LESS)
 
-        #glEnable(GL_CULL_FACE);
-        #glCullFace(GL_BACK);
+        glActiveTexture(GL_TEXTURE0);
+        glUniform1i(glGetUniformLocation(glsl_program, "map_Kd"), 0);
 
-        count = self.vertices.data._length_ // 3
-        glDrawArrays(GL_TRIANGLES, 0, count)
+        for (mtl, start, count) in self.mtl_list:
+            glUniform3f(glGetUniformLocation(glsl_program, "Kd"), *mtl.Kd)
+            glUniform3f(glGetUniformLocation(glsl_program, "Ka"), *mtl.Ka)
+            glUniform1f(glGetUniformLocation(glsl_program, "d"), mtl.d)
+
+            glBindTexture(GL_TEXTURE_2D, mtl.map_Kd)
+ 
+            glDrawArrays(GL_TRIANGLES, start, count)
+
         gl_checkErr()
 
 
@@ -267,7 +263,7 @@ def parse_obj(path):
             mtls = parse_mtl(os.path.dirname(path) + '/' + l[1])
         # Use material
         elif l[0] == 'usemtl':
-            cur_object.mtl = mtls[l[1]]
+            cur_object.mtl_list.append([mtls[l[1]], len(cur_object.vertices) // 8, 0])
         # Smoothing
         elif l[0] == 's':
             pass
@@ -281,6 +277,7 @@ def parse_obj(path):
                 else:
                     cur_object.vertices.extend(vt_list[vt - 1])
                 cur_object.vertices.extend(vn_list[vn - 1])
+            cur_object.mtl_list[-1][2] += 3
         # Vertex
         elif l[0] == 'v':
             v_list.append(tuple(float(i) for i in l[1:4]))
