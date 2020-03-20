@@ -216,7 +216,6 @@ class Object_VBO:
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LESS)
 
-        glActiveTexture(GL_TEXTURE0);
         glUniform1i(glGetUniformLocation(glsl_program, "map_Kd"), 0);
 
         for (mtl, start, count) in self.mtl_list:
@@ -224,6 +223,7 @@ class Object_VBO:
             glUniform3f(glGetUniformLocation(glsl_program, "Ka"), *mtl.Ka)
             glUniform1f(glGetUniformLocation(glsl_program, "d"), mtl.d)
 
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, mtl.map_Kd)
  
             glDrawArrays(GL_TRIANGLES, start, count)
