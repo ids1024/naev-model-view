@@ -243,9 +243,18 @@ class Object_VBO:
     def draw(self):
         glBindVertexArray(self.vao)
 
+        scale = 1/6
+
+        if window_width < window_height:
+            scale_w = scale
+            scale_h = scale_w * (window_width / window_height)
+        else:
+            scale_h = scale
+            scale_w = scale_h * (window_height / window_width)
+
         trans_unif = glGetUniformLocation(glsl_program, "trans")
         trans = glm.ortho(-1, 1, -1, 1)
-        trans = glm.scale(trans, glm.vec3(1/6, 1/6, 1/6))
+        trans = glm.scale(trans, glm.vec3(scale_w, scale_h, scale))
         trans = glm.rotate(trans, -math.pi / 2, glm.vec3(1, 0, 0))
         trans = glm.rotate(trans, math.pi / 4, glm.vec3(1, 0, 0))
         trans = glm.rotate(trans, rot, glm.vec3(0, 0, 1))
@@ -371,6 +380,9 @@ ship = parse_obj(args.obj)
 
 rot = args.rot * math.pi / 180
 
+window_width = 800
+window_height = 600
+
 if args.save is not None:
     fb = glGenFramebuffers(1)
     glBindFramebuffer(GL_FRAMEBUFFER, fb)
@@ -386,6 +398,8 @@ if args.save is not None:
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer)
 
     glViewport(0, 0, args.res, args.res)
+    window_height = args.res
+    window_width = args.res
 
     glClearColor(0., 0., 0., 0.)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -393,6 +407,7 @@ if args.save is not None:
 
     data = glReadPixels(0, 0, args.res, args.res, GL_RGBA, GL_UNSIGNED_BYTE)
     image = Image.frombytes('RGBA', (args.res, args.res), data)
+    image = image.transpose(Image.FLIP_TOP_BOTTOM)
     image.save(args.save)
 
     sys.exit()
@@ -405,6 +420,9 @@ def display():
     glutPostRedisplay()
 
 def reshape(w, h):
+    global window_width, window_height
+    window_width = w
+    window_height = h
     glViewport(0, 0, w, h)
 
 def keyboard(key, x, y):
