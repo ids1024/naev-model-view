@@ -125,7 +125,7 @@ class Material:
     Ks = None
     Ns = None
     Ni = None
-    bm = 1
+    bm = 1.0
     d = 1.0
 
     def __init__(self):
@@ -182,9 +182,6 @@ def parse_mtl(path):
             cur_material.Ni = float(l[1])
         elif l[0] == 'd':
             cur_material.d = float(l[1])
-        # Illumination mode
-        elif l[0] == 'illum':
-            pass
         elif l[0] == 'map_Kd':
             # XXX handle s
             opts, rest = mtl_getopt(l[1:], {'s': 3})
@@ -193,9 +190,16 @@ def parse_mtl(path):
         elif l[0] == 'map_Bump':
             # XXX handle s
             opts, rest = mtl_getopt(l[1:], {'s': 3, 'bm': 1})
-            cur_material.bm = float(opts['bm'][0])
+            if 'bm' in opts:
+               cur_material.bm = float(opts['bm'][0])
             map_Bump = ' '.join(rest)
             cur_material.map_Bump = loadTexture(os.path.dirname(path) + '/' + map_Bump)
+        # Illumination mode
+        elif l[0] == 'illum':
+            pass
+        # Ignore lines
+        elif l[0] == 'l':
+            pass
         else:
             print(f"Ignoring {l[0]}")
 
