@@ -24,6 +24,7 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 from PIL import Image
 import glm
 import math
+import argparse
 
 vert = """
 #version 150
@@ -348,6 +349,12 @@ def parse_obj(path):
 
     return Ship(body, engine)
 
+parser = argparse.ArgumentParser()
+parser.add_argument('obj')
+parser.add_argument('--rot', type=int, default=0)
+parser.add_argument('--res', type=int, default=256)
+parser.add_argument('--write')
+args = parser.parse_args()
 
 glutInit("")
 glutInitContextVersion(3, 2)
@@ -355,14 +362,45 @@ glutInitContextProfile(GLUT_CORE_PROFILE)
 glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE)
 glutInitWindowSize(800, 600)
 glutInitWindowPosition(0, 0)
-window = glutCreateWindow("")
+window = glutCreateWindow("Obj Viewer")
 
 glsl_program = gl_program_vert_frag(vert, frag)
 glUseProgram(glsl_program)
 
-ship = parse_obj(sys.argv[1])
+ship = parse_obj(args.obj)
 
-rot = 0
+rot = args.rot * math.pi / 180
+
+if args.write is not None:
+    fb = glGenFramebuffers(1)
+    glBindFramebuffer(GL_FRAMEBUFFER, fb)
+
+    tex = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, tex)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, args.res, args.res, 0, GL_RGBA, GL_UNSIGNED_BYTE, None);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+    glBindFramebuffer(GL_FRAMEBUFFER, fb)
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex, 0);
+    glDrawBuffers(1, [GL_COLOR_ATTACHMENT0])
+
+    depth_buffer = glGenRenderbuffers(1)
+    glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer)
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, args.res, args.res)
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer)
+
+    glViewport(0, 0, args.res, args.res)
+
+    glClearColor(0., 0., 0., 0.)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    ship.draw()
+
+    glBindTexture(GL_TEXTURE_2D, tex)
+    data = glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE)
+    image = Image.frombytes('RGBA', (args.res, args.res), data)
+    image.save(args.write)
+
+    sys.exit()
 
 def display():
     glClearColor(1., 1., 1., 1.)
