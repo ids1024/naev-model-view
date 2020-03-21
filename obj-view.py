@@ -246,6 +246,9 @@ class Object_VBO:
         glEnableVertexAttribArray(normal_attrib)
         glVertexAttribPointer(normal_attrib, 2, GL_FLOAT, GL_FALSE, 8 * 4, c_void_p(5 * 4))
 
+        uniform_count = glGetProgramiv(glsl_program, GL_ACTIVE_UNIFORMS)
+        self.uniforms = {glGetActiveUniform(glsl_program, i)[0].decode() : i for i in range(uniform_count)}
+
 
     def draw(self):
         glBindVertexArray(self.vao)
@@ -259,25 +262,24 @@ class Object_VBO:
             scale_h = scale
             scale_w = scale_h * (window_height / window_width)
 
-        trans_unif = glGetUniformLocation(glsl_program, "trans")
         trans = glm.ortho(-1, 1, -1, 1)
         trans = glm.scale(trans, glm.vec3(scale_w, scale_h, scale))
         trans = glm.rotate(trans, -math.pi / 2, glm.vec3(1, 0, 0))
         trans = glm.rotate(trans, math.pi / 4, glm.vec3(1, 0, 0))
         trans = glm.rotate(trans, rot, glm.vec3(0, 0, 1))
-        glUniformMatrix4fv(trans_unif, 1, GL_FALSE, trans.to_list())
+        glUniformMatrix4fv(self.uniforms["trans"], 1, GL_FALSE, trans.to_list())
 
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LESS)
 
-        glUniform1i(glGetUniformLocation(glsl_program, "map_Kd"), 0)
-        glUniform1i(glGetUniformLocation(glsl_program, "map_Bump"), 1)
+        glUniform1i(self.uniforms["map_Kd"], 0)
+        glUniform1i(self.uniforms["map_Bump"], 1)
 
         for (mtl, start, count) in self.mtl_list:
-            glUniform3f(glGetUniformLocation(glsl_program, "Kd"), *mtl.Kd)
-            glUniform3f(glGetUniformLocation(glsl_program, "Ka"), *mtl.Ka)
-            glUniform1f(glGetUniformLocation(glsl_program, "d"), mtl.d)
-            glUniform1f(glGetUniformLocation(glsl_program, "bm"), mtl.bm)
+            glUniform3f(self.uniforms["Kd"], *mtl.Kd)
+            glUniform3f(self.uniforms["Ka"], *mtl.Ka)
+            glUniform1f(self.uniforms["d"], mtl.d)
+            glUniform1f(self.uniforms["bm"], mtl.bm)
 
             glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, mtl.map_Kd)
