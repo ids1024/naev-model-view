@@ -210,6 +210,7 @@ def parse_mtl(path):
 
 
 class Object:
+    radius = 0.0
     def __init__(self):
         self.vertices = []
         self.mtl_list = []
@@ -220,6 +221,7 @@ class Object_C:
         assert isinstance(o, Object)
         self.vertices = (GLfloat * len(o.vertices))(*o.vertices)
         self.mtl_list = o.mtl_list
+        self.radius = o.radius
 
 
 class Object_VBO:
@@ -229,6 +231,7 @@ class Object_VBO:
         self.vertices = VBO(o.vertices, GL_STATIC_DRAW, GL_ARRAY_BUFFER)
         self.vao = glGenVertexArrays(1)
         self.mtl_list = o.mtl_list
+        self.radius = o.radius
 
         glBindVertexArray(self.vao)
 
@@ -253,17 +256,16 @@ class Object_VBO:
     def draw(self):
         glBindVertexArray(self.vao)
 
-        scale = 1/6
+        scale = self.radius
 
         if window_width < window_height:
             scale_w = scale
-            scale_h = scale_w * (window_width / window_height)
+            scale_h = scale_w * (window_height / window_width)
         else:
             scale_h = scale
-            scale_w = scale_h * (window_height / window_width)
+            scale_w = scale_h * (window_width / window_height)
 
-        trans = glm.ortho(-1, 1, -1, 1)
-        trans = glm.scale(trans, glm.vec3(scale_w, scale_h, scale))
+        trans = glm.ortho(-scale_w, scale_w, -scale_h, scale_h, -scale, scale)
         trans = glm.rotate(trans, -math.pi / 2, glm.vec3(1, 0, 0))
         trans = glm.rotate(trans, math.pi / 4, glm.vec3(1, 0, 0))
         trans = glm.rotate(trans, rot, glm.vec3(0, 0, 1))
@@ -361,6 +363,10 @@ def parse_obj(path):
             pass
         else:
             print(f"Ignoring {l[0]}")
+
+    radius = max(abs(j) for i in v_list for j in i)
+    engine.radius = radius
+    body.radius = radius
 
     engine = Object_C(engine)
     body = Object_C(body)
