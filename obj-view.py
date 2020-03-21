@@ -204,9 +204,6 @@ def parse_mtl(path):
         # Illumination mode
         elif l[0] == 'illum':
             pass
-        # Ignore lines
-        elif l[0] == 'l':
-            pass
         else:
             print(f"Ignoring {l[0]}")
 
@@ -358,6 +355,9 @@ def parse_obj(path):
                 cur_object = body
             else:
                 print(f"Ignoring object {l[1]}")
+        # Ignore lines
+        elif l[0] == 'l':
+            pass
         else:
             print(f"Ignoring {l[0]}")
 
