@@ -15,7 +15,6 @@
 
 import sys
 import os
-import time
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
@@ -390,6 +389,7 @@ glUseProgram(glsl_program)
 ship = parse_obj(args.obj)
 
 rot = args.rot * math.pi / 180
+rot_dir = 0
 
 window_width = 800
 window_height = 600
@@ -423,7 +423,17 @@ if args.save is not None:
 
     sys.exit()
 
+prev_time = 0
 def display():
+    global prev_time, rot
+
+    cur_time = glutGet(GLUT_ELAPSED_TIME)
+    dt = cur_time - prev_time
+    prev_time = cur_time
+
+    ROT_RATE = .75 # Rotations per second
+    rot += rot_dir * dt * (2 * math.pi) * (ROT_RATE / 1000);
+
     glClearColor(1., 1., 1., 1.)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     ship.draw()
@@ -436,14 +446,20 @@ def reshape(w, h):
     window_height = h
     glViewport(0, 0, w, h)
 
-def keyboard(key, x, y):
-   global rot
+def keyboard_down(key, x, y):
+   global rot_dir
    if key == b'a':
-      rot += math.pi / 16
+      rot_dir = 1
    elif key == b'd':
-      rot -= math.pi / 16
+      rot_dir = -1
+
+def keyboard_up(key, x, y):
+   global rot_dir
+   if key in b'ad':
+      rot_dir = 0
 
 glutDisplayFunc(display)
 glutReshapeFunc(reshape)
-glutKeyboardFunc(keyboard)
+glutKeyboardFunc(keyboard_down)
+glutKeyboardUpFunc(keyboard_up)
 glutMainLoop()
