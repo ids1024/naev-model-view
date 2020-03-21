@@ -39,7 +39,7 @@ out vec3 normal_out;
 
 void main(void) {
    tex_out = tex;
-   normal_out = (trans * vec4(normal, 1.)).xyz;
+   normal_out = normal;
    gl_Position = trans * vertex;
 }
 """
@@ -47,6 +47,8 @@ void main(void) {
 
 frag = """
 #version 150
+
+uniform mat4 trans;
 
 uniform sampler2D map_Kd, map_Bump;
 
@@ -60,7 +62,10 @@ out vec4 color_out;
 const vec3 lightDir = vec3(0, 0, -1);
 
 void main(void) {
-   vec3 norm = normalize(normal_out + bm * texture(map_Bump, tex_out).xyz);
+   float normal_ratio = step(.01, bm);
+   vec3 norm = (1. - normal_ratio) * normal_out;
+   norm += normal_ratio * bm * texture(map_Bump, tex_out).xyz;
+   norm = normalize((trans * vec4(norm, 1.)).xyz);
 
    vec3 ambient = Ka;
 
@@ -125,7 +130,7 @@ class Material:
     Ks = None
     Ns = None
     Ni = None
-    bm = 1.0
+    bm = 0.0
     d = 1.0
 
     def __init__(self):
@@ -192,6 +197,8 @@ def parse_mtl(path):
             opts, rest = mtl_getopt(l[1:], {'s': 3, 'bm': 1})
             if 'bm' in opts:
                cur_material.bm = float(opts['bm'][0])
+            else:
+               cur_material.bm = 1.0
             map_Bump = ' '.join(rest)
             cur_material.map_Bump = loadTexture(os.path.dirname(path) + '/' + map_Bump)
         # Illumination mode
