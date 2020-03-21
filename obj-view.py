@@ -72,6 +72,7 @@ void main(void) {
 
    color_out = texture(map_Kd, tex_out);
    color_out.rgb *= .4 * ambient + .7 * diffuse;
+   color_out.rgb *= 2;
    color_out.a = d;
 }
 """
@@ -381,6 +382,7 @@ parser.add_argument('obj')
 parser.add_argument('--rot', type=int, default=0)
 parser.add_argument('--res', type=int, default=256)
 parser.add_argument('--save')
+parser.add_argument('--exit', action='store_true')
 args = parser.parse_args()
 
 glutInit("")
@@ -429,6 +431,8 @@ if args.save is not None:
     image = image.transpose(Image.FLIP_TOP_BOTTOM)
     image.save(args.save)
 
+    sys.exit()
+elif args.exit:
     sys.exit()
 
 prev_time = 0
