@@ -353,7 +353,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('obj')
 parser.add_argument('--rot', type=int, default=0)
 parser.add_argument('--res', type=int, default=256)
-parser.add_argument('--write')
+parser.add_argument('--save')
 args = parser.parse_args()
 
 glutInit("")
@@ -371,18 +371,14 @@ ship = parse_obj(args.obj)
 
 rot = args.rot * math.pi / 180
 
-if args.write is not None:
+if args.save is not None:
     fb = glGenFramebuffers(1)
     glBindFramebuffer(GL_FRAMEBUFFER, fb)
 
-    tex = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, tex)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, args.res, args.res, 0, GL_RGBA, GL_UNSIGNED_BYTE, None);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-    glBindFramebuffer(GL_FRAMEBUFFER, fb)
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex, 0);
-    glDrawBuffers(1, [GL_COLOR_ATTACHMENT0])
+    color_buffer = glGenRenderbuffers(1)
+    glBindRenderbuffer(GL_RENDERBUFFER, color_buffer)
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, args.res, args.res);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, color_buffer)
 
     depth_buffer = glGenRenderbuffers(1)
     glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer)
@@ -395,10 +391,9 @@ if args.write is not None:
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     ship.draw()
 
-    glBindTexture(GL_TEXTURE_2D, tex)
-    data = glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE)
+    data = glReadPixels(0, 0, args.res, args.res, GL_RGBA, GL_UNSIGNED_BYTE)
     image = Image.frombytes('RGBA', (args.res, args.res), data)
-    image.save(args.write)
+    image.save(args.save)
 
     sys.exit()
 
