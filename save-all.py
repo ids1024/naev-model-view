@@ -24,6 +24,9 @@ program = ObjProgram()
 program.use()
 
 for i in os.listdir('3d'):
+    if i.startswith('.') or i.startswith('viper'):
+        continue
+
     glClearColor(0., 0., 0., 0.)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 

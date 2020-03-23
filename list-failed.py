@@ -12,7 +12,10 @@ stdout = sys.stdout
 sys.stdout = open(os.devnull, 'w')
 
 for i in os.listdir('3d'):
+    if i.startswith('.') or i.startswith('viper'):
+        continue
+
     try:
         ship = parse_obj(f"3d/{i}/{i}.obj")
     except Exception as e:
-        stdout.write(f"Error parsing '{i}.obj': {e}\n")
+        stdout.write(f"Error loading '{i}.obj': {e}\n")
