@@ -111,9 +111,8 @@ class ObjProgram:
             scale_w = scale_h * (width / height)
 
         trans = glm.ortho(-scale_w, scale_w, -scale_h, scale_h, -scale, scale)
-        trans = glm.rotate(trans, -math.pi / 2, glm.vec3(1, 0, 0))
         trans = glm.rotate(trans, math.pi / 4, glm.vec3(1, 0, 0))
-        trans = glm.rotate(trans, rot, glm.vec3(0, 0, 1))
+        trans = glm.rotate(trans, rot, glm.vec3(0, 1, 0))
         glUniformMatrix4fv(self.uniforms["trans"], 1, GL_FALSE, trans.to_list())
 
         glEnable(GL_DEPTH_TEST)
