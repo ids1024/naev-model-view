@@ -1,4 +1,5 @@
 import os
+import math
 
 from .material import Material
 from .object import Object
@@ -132,7 +133,7 @@ def parse_obj(path):
         else:
             print(f"Ignoring {l[0]}")
 
-    radius = max(abs(j) for i in v_list for j in i)
+    radius = max(math.sqrt(a**2+b**2+c**2) for a, b, c in v_list)
 
     for v in objects.values():
         v.radius = radius
