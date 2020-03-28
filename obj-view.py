@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # TODO: antialias edges of model
 # TODO: diffuse
 # TODO: file format: interleaved, extendable
